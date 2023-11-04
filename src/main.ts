@@ -81,8 +81,17 @@ function main() {
   }
 
   const material = new MeshBasicMaterial({ color: 0x999999, wireframe: true }); // This will make it green, but you can adjust as desired
-  const box = new Mesh(geometry, material);
-  scene.add(box);
+  const box1 = new Mesh(geometry, material);
+  scene.add(box1);
+
+  // Create a second geometry identical to the first one
+  const geometry2 = geometry.clone();
+  const box2 = new Mesh(geometry2, material);
+
+  // Rotate the second geometry by 180 degrees around the y-axis
+  box2.rotation.y = Math.PI;
+
+  scene.add(box2);
 
   scene.add(new AxesHelper(50));
 

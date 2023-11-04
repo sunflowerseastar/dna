@@ -1,11 +1,14 @@
 import {
-  AxesHelper,
   BoxBufferGeometry,
   Color,
+  DoubleSide,
   Mesh,
   MeshBasicMaterial,
+  // MeshPhongMaterial,
   PerspectiveCamera,
   Scene,
+  TubeGeometry,
+  Vector3,
   WebGLRenderer,
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -13,7 +16,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 // import { createCamera } from "./threejs-helpers/camera";
 // import { createScene } from "./threejs-helpers/scene";
 // import { createRenderer } from "./threejs-helpers/renderer";
-// import { Path3 } from "./Path3";
+import { Path3 } from "./Path3";
 
 // let camera: PerspectiveCamera;
 // let renderer: WebGLRenderer;
@@ -44,56 +47,134 @@ function main() {
 
   container.append(renderer.domElement);
 
-  var rbnWidth = 0.3; // y-axis "height" is the width of the ribbon
+  var rbnWidth = 0.2; // y-axis "height" is the width of the ribbon
   var rbnSteps = 2;
-  var rbnStepLength = 2;
+  var rbnStepLength = 4;
   var rbnSegsPerStep = 40;
   var rbnRadius = 1;
 
   const geometry = new BoxBufferGeometry(
-    rbnSteps * Math.PI * 2,     // width
-    rbnWidth,                   // height
-    0.15,                       // depth
-    rbnSteps * rbnSegsPerStep,  // width segments
-    1,                          // height segments
-    1                           // depth segments
+    rbnSteps * Math.PI * 2, // width
+    rbnWidth, // height
+    0.1, // depth
+    rbnSteps * rbnSegsPerStep, // width segments
+    1, // height segments
+    1 // depth segments
   );
 
   const position = geometry.getAttribute("position");
-  // console.log("position.count", position.count);
-  // console.log("position", position);
 
-  // const middle = 0.5; // The center of the box
+  let minY = 0;
+  let maxY = 0;
+
   for (let i = 0; i < position.count; i++) {
     let x = position.getX(i);
     let y = position.getY(i);
     let z = position.getZ(i);
 
-    console.log('x, -x', x, -x);
-    // let angle = -x; // twist left as it raises
     let radius = rbnRadius + z;
     let shift = (x / (Math.PI * 2)) * rbnStepLength + y;
-    console.log('shift', shift);
 
-    position.setX(i, Math.cos(x) * radius);
-    position.setY(i,  shift);
-    position.setZ(i, Math.sin(x) * radius);
+    position.setX(i, Math.cos(-x) * radius); // `-x` flips the rotation
+    position.setY(i, shift);
+    position.setZ(i, Math.sin(-x) * radius);
+
+    if (shift < minY) {
+      minY = shift;
+    }
+    if (shift > maxY) {
+      maxY = shift;
+    }
   }
 
-  const material = new MeshBasicMaterial({ color: 0x999999, wireframe: true }); // This will make it green, but you can adjust as desired
-  const box1 = new Mesh(geometry, material);
-  scene.add(box1);
+  const material = new MeshBasicMaterial({ color: 0x999999 });
+  const helix1 = new Mesh(geometry, material);
+  scene.add(helix1);
 
   // Create a second geometry identical to the first one
   const geometry2 = geometry.clone();
   const box2 = new Mesh(geometry2, material);
 
-  // Rotate the second geometry by 180 degrees around the y-axis
-  box2.rotation.y = Math.PI;
+  // Rotate the second geometry around the y-axis
+  box2.rotation.y = Math.PI * 0.8;
 
   scene.add(box2);
 
-  scene.add(new AxesHelper(50));
+  const baseColorMaterial = (color: "red" | "green" | "blue" | "yellow") => {
+    const colorLookup = {
+      red: 0xff0000,
+      blue: 0x0000ff,
+      green: 0x00ff00,
+      yellow: 0xffff00,
+    };
+    return new MeshBasicMaterial({
+      color: colorLookup[color],
+      side: DoubleSide,
+    });
+  };
+
+  const tubeGeometry = (path: any) =>
+    new TubeGeometry(
+      path,
+      1, // pathSegments,
+      0.05, // tubeRadius,
+      20, // radiusSegments,
+      false // closed
+    );
+
+  const basePair = (basePairY) => {
+    // Calculate the angle for the first point on the first helix based on the basePairY position
+    const angle1 = 2 * Math.PI * (basePairY / rbnStepLength);
+
+    // Calculate the x, y, and z coordinates for this point
+    const x1 = rbnRadius * Math.cos(-angle1);
+    const y1 = basePairY;
+    const z1 = rbnRadius * Math.sin(-angle1);
+
+    // Calculate the x, y, and z coordinates for this point
+    const x2 =
+      x1 * Math.cos(-box2.rotation.y) - z1 * Math.sin(-box2.rotation.y);
+    const y2 = y1;
+    const z2 =
+      x1 * Math.sin(-box2.rotation.y) + z1 * Math.cos(-box2.rotation.y);
+
+    // Create two base pairs, each representing half of the original base pair
+    const base1: Vector3[] = [
+      new Vector3(x1, y1, z1),
+      new Vector3((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2),
+    ];
+    const base2: Vector3[] = [
+      new Vector3((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2),
+      new Vector3(x2, y2, z2),
+    ];
+
+    const path1 = new Path3(base1);
+    const path2 = new Path3(base2);
+
+    const isRedGreen = Math.random() >= 0.5;
+    const isColorFlipped = Math.random() >= 0.5;
+
+    const meshMaterial1 = baseColorMaterial(isRedGreen ? "red" : "blue");
+    const meshMaterial2 = baseColorMaterial(isRedGreen ? "green" : "yellow");
+
+    const mesh1a = new Mesh(
+      tubeGeometry(path1),
+      isColorFlipped ? meshMaterial1 : meshMaterial2
+    );
+    const mesh1b = new Mesh(
+      tubeGeometry(path2),
+      isColorFlipped ? meshMaterial2 : meshMaterial1
+    );
+    scene.add(mesh1a);
+    scene.add(mesh1b);
+  };
+
+  const numBasePairYs = rbnSteps * 10;
+  const basePairYsRange = maxY - minY;
+  const basePairYsDistance = basePairYsRange / numBasePairYs;
+  for (let i = 1; i < numBasePairYs; i++) {
+    basePair(minY + i * basePairYsDistance);
+  }
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;

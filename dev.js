@@ -12,6 +12,6 @@ require("esbuild")
       },
     },
   })
-  .then((result) => {
+  .then(() => {
     console.log("watching...");
   });

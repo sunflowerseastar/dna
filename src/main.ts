@@ -1,6 +1,5 @@
 import {
   BoxBufferGeometry,
-  Color,
   DoubleSide,
   Mesh,
   MeshPhongMaterial,
@@ -28,61 +27,53 @@ function main() {
   renderer = createRenderer();
   scene = createScene();
 
-  // var scene = new Scene();
-  // scene.background = new Color(0xeeeeee);
-
-  // var renderer = new WebGLRenderer({
-  //   antialias: true,
-  // });
-  // renderer.setSize(window.innerWidth, window.innerHeight);
-  // document.body.appendChild(renderer.domElement);
-
   container.append(renderer.domElement);
 
-  var rbnWidth = 0.2; // y-axis "height" is the width of the ribbon
-  var rbnSteps = 2;
-  var rbnStepLength = 4;
-  var rbnSegsPerStep = 40;
-  var rbnRadius = 1;
+  const helixEdgeWidth = 0.4; // how "tall" the edge of the helix is, aka "ribbon width"
+  const numSteps = 3; // one step is a full coil around the imaginary cylinder in the middle
+  const yLengthPerStep = 5; // adjust the overall height of the double helix
+  const helixRadius = 1.35;
+  const numSegmentsPerStep = 40;
 
+  // the helix starts out as one long rectangle, like an uncoiled ribbon
   const geometry = new BoxBufferGeometry(
-    rbnSteps * Math.PI * 2, // width
-    rbnWidth, // height
-    0.1, // depth
-    rbnSteps * rbnSegsPerStep, // width segments
+    numSteps * Math.PI * 2, // width
+    helixEdgeWidth, // height of the "uncoiled ribbon," but "width" of the coiled helix's edge
+    0.04, // depth
+    numSteps * numSegmentsPerStep, // width segments
     1, // height segments
     1 // depth segments
   );
 
   const position = geometry.getAttribute("position");
 
-  let minY = 0;
-  let maxY = 0;
+  let doubleHelixMinY = 0;
+  let doubleHelixMaxY = 0;
 
   for (let i = 0; i < position.count; i++) {
     let x = position.getX(i);
     let y = position.getY(i);
     let z = position.getZ(i);
 
-    let radius = rbnRadius + z;
-    let shift = (x / (Math.PI * 2)) * rbnStepLength + y;
+    let radius = helixRadius + z;
+    let shift = (x / (Math.PI * 2)) * yLengthPerStep + y;
 
     position.setX(i, Math.cos(-x) * radius); // `-x` flips the rotation
     position.setY(i, shift);
     position.setZ(i, Math.sin(-x) * radius);
 
-    if (shift < minY) {
-      minY = shift;
+    if (shift < doubleHelixMinY) {
+      doubleHelixMinY = shift;
     }
-    if (shift > maxY) {
-      maxY = shift;
+    if (shift > doubleHelixMaxY) {
+      doubleHelixMaxY = shift;
     }
   }
 
   const material = new MeshPhongMaterial({
-    color: 0x222222,
-    emissive: 0x000000,
-    shininess: 10,
+    color: 0x3a3a3a,
+    emissive: 0xd4af37,
+    shininess: 100,
     side: DoubleSide,
     flatShading: false,
   });
@@ -95,7 +86,7 @@ function main() {
   const box2 = new Mesh(geometry2, material);
 
   // Rotate the second geometry around the y-axis
-  box2.rotation.y = Math.PI * 0.8;
+  box2.rotation.y = Math.PI * 0.78;
 
   scene.add(box2);
 
@@ -108,8 +99,7 @@ function main() {
     };
     return new MeshPhongMaterial({
       color: colorLookup[color],
-      shininess: 10,
-      side: DoubleSide,
+      shininess: 30,
       flatShading: false,
     });
   };
@@ -118,39 +108,32 @@ function main() {
     new TubeGeometry(
       path,
       1, // pathSegments,
-      0.05, // tubeRadius,
+      0.065, // tubeRadius,
       20, // radiusSegments,
       false // closed
     );
 
-  const basePair = (basePairY) => {
-    // Calculate the angle for the first point on the first helix based on the basePairY position
-    const angle1 = 2 * Math.PI * (basePairY / rbnStepLength);
-
-    // Calculate the x, y, and z coordinates for this point
-    const x1 = rbnRadius * Math.cos(-angle1);
+  const basePair = (basePairY: number) => {
+    // calculate the helix points based on the base pair's y
+    const angle1 = 2 * Math.PI * (basePairY / yLengthPerStep);
+    const x1 = helixRadius * Math.cos(-angle1);
     const y1 = basePairY;
-    const z1 = rbnRadius * Math.sin(-angle1);
-
-    // Calculate the x, y, and z coordinates for this point
+    const z1 = helixRadius * Math.sin(-angle1);
     const x2 =
       x1 * Math.cos(-box2.rotation.y) - z1 * Math.sin(-box2.rotation.y);
     const y2 = y1;
     const z2 =
       x1 * Math.sin(-box2.rotation.y) + z1 * Math.cos(-box2.rotation.y);
 
-    // Create two base pairs, each representing half of the original base pair
-    const base1: Vector3[] = [
+    // split it in half, so it's a pair
+    const baseCoords1: Vector3[] = [
       new Vector3(x1, y1, z1),
       new Vector3((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2),
     ];
-    const base2: Vector3[] = [
+    const baseCoords2: Vector3[] = [
       new Vector3((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2),
       new Vector3(x2, y2, z2),
     ];
-
-    const path1 = new Path3(base1);
-    const path2 = new Path3(base2);
 
     const isRedGreen = Math.random() >= 0.5;
     const isColorFlipped = Math.random() >= 0.5;
@@ -158,23 +141,23 @@ function main() {
     const meshMaterial1 = baseColorMaterial(isRedGreen ? "red" : "blue");
     const meshMaterial2 = baseColorMaterial(isRedGreen ? "green" : "yellow");
 
-    const mesh1a = new Mesh(
-      tubeGeometry(path1),
+    const baseMesh1 = new Mesh(
+      tubeGeometry(new Path3(baseCoords1)),
       isColorFlipped ? meshMaterial1 : meshMaterial2
     );
-    const mesh1b = new Mesh(
-      tubeGeometry(path2),
+    const baseMesh2 = new Mesh(
+      tubeGeometry(new Path3(baseCoords2)),
       isColorFlipped ? meshMaterial2 : meshMaterial1
     );
-    scene.add(mesh1a);
-    scene.add(mesh1b);
+    scene.add(baseMesh1);
+    scene.add(baseMesh2);
   };
 
-  const numBasePairYs = rbnSteps * 10;
-  const basePairYsRange = maxY - minY;
-  const basePairYsDistance = basePairYsRange / numBasePairYs;
-  for (let i = 1; i < numBasePairYs; i++) {
-    basePair(minY + i * basePairYsDistance);
+  const numBasePairs = numSteps * 10;
+  const totalDoubleHelixHeight = doubleHelixMaxY - doubleHelixMinY;
+  const distanceBetweenBasePairs = totalDoubleHelixHeight / numBasePairs;
+  for (let i = 1; i < numBasePairs; i++) {
+    basePair(doubleHelixMinY + i * distanceBetweenBasePairs);
   }
 
   const controls = new OrbitControls(camera, renderer.domElement);

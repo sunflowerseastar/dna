@@ -3,8 +3,7 @@ import {
   Color,
   DoubleSide,
   Mesh,
-  MeshBasicMaterial,
-  // MeshPhongMaterial,
+  MeshPhongMaterial,
   PerspectiveCamera,
   Scene,
   TubeGeometry,
@@ -13,37 +12,30 @@ import {
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-// import { createCamera } from "./threejs-helpers/camera";
-// import { createScene } from "./threejs-helpers/scene";
-// import { createRenderer } from "./threejs-helpers/renderer";
+import { createCamera } from "./threejs-helpers/camera";
+import { createScene } from "./threejs-helpers/scene";
+import { createRenderer } from "./threejs-helpers/renderer";
 import { Path3 } from "./Path3";
 
-// let camera: PerspectiveCamera;
-// let renderer: WebGLRenderer;
-// let scene: Scene;
+let camera: PerspectiveCamera;
+let renderer: WebGLRenderer;
+let scene: Scene;
 
 function main() {
   const container: HTMLDivElement = document.querySelector("#scene-container")!;
 
-  // camera = createCamera();
-  // renderer = createRenderer();
-  // scene = createScene();
+  camera = createCamera();
+  renderer = createRenderer();
+  scene = createScene();
 
-  var scene = new Scene();
-  scene.background = new Color(0xeeeeee);
+  // var scene = new Scene();
+  // scene.background = new Color(0xeeeeee);
 
-  const camera = new PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-  );
-  camera.position.set(2, 3, 10);
-  var renderer = new WebGLRenderer({
-    antialias: true,
-  });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+  // var renderer = new WebGLRenderer({
+  //   antialias: true,
+  // });
+  // renderer.setSize(window.innerWidth, window.innerHeight);
+  // document.body.appendChild(renderer.domElement);
 
   container.append(renderer.domElement);
 
@@ -87,7 +79,14 @@ function main() {
     }
   }
 
-  const material = new MeshBasicMaterial({ color: 0x999999 });
+  const material = new MeshPhongMaterial({
+    color: 0x222222,
+    emissive: 0x000000,
+    shininess: 10,
+    side: DoubleSide,
+    flatShading: false,
+  });
+
   const helix1 = new Mesh(geometry, material);
   scene.add(helix1);
 
@@ -102,14 +101,16 @@ function main() {
 
   const baseColorMaterial = (color: "red" | "green" | "blue" | "yellow") => {
     const colorLookup = {
-      red: 0xff0000,
-      blue: 0x0000ff,
-      green: 0x00ff00,
-      yellow: 0xffff00,
+      red: 0xff8c94,
+      blue: 0x91cdf2,
+      green: 0xb1e597,
+      yellow: 0xfaedb9,
     };
-    return new MeshBasicMaterial({
+    return new MeshPhongMaterial({
       color: colorLookup[color],
+      shininess: 10,
       side: DoubleSide,
+      flatShading: false,
     });
   };
 

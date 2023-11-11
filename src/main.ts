@@ -166,6 +166,9 @@ function main() {
 
   function render() {
     requestAnimationFrame(render);
+    
+    scene.rotation.y += 0.0012;
+    
     renderer.render(scene, camera);
     controls.update();
   }

@@ -1,6 +1,6 @@
 import {
   AmbientLight,
-  BoxBufferGeometry,
+  BoxGeometry,
   Color,
   DoubleSide,
   Fog,
@@ -77,7 +77,7 @@ const helixRadius = 1.35;
 const numSegmentsPerStep = 40;
 
 // the helix starts out as one long rectangle, like an uncoiled ribbon
-const geometry = new BoxBufferGeometry(
+const geometry = new BoxGeometry(
   numSteps * Math.PI * 2, // width
   helixEdgeWidth, // height of the "uncoiled ribbon," but "width" of the coiled helix's edge
   0.04, // depth

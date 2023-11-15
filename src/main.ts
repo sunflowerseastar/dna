@@ -1,28 +1,14 @@
-import {
-  AmbientLight,
-  BoxGeometry,
-  Color,
-  DoubleSide,
-  Fog,
-  Mesh,
-  MeshPhongMaterial,
-  PerspectiveCamera,
-  PointLight,
-  Scene,
-  TubeGeometry,
-  Vector3,
-  WebGLRenderer,
-} from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+// import * as THREE from "three";
+// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import { Path3 } from "./Path3";
 
 const container: HTMLDivElement = document.querySelector("#scene-container")!;
 
 /*
- * camera, scene, renderer
+ * camera, scene, light, renderer
  */
-const camera = new PerspectiveCamera(
+const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
@@ -30,38 +16,34 @@ const camera = new PerspectiveCamera(
 );
 camera.position.set(9, 0, 9);
 
-/*
- * scene
- */
-const scene = new Scene();
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x202020);
 
-scene.background = new Color(0x202020);
-
-const ambientLight = new AmbientLight(0x444444);
+const ambientLight = new THREE.AmbientLight(0x444444);
 scene.add(ambientLight);
 
-const light1 = new PointLight(0xffffff, 0.4, 0);
+const light1 = new THREE.PointLight(0xffffff, 0.4, 0);
 light1.position.set(0, 200, 0);
 scene.add(light1);
 
-const light2 = new PointLight(0xffffff, 0.7, 0);
+const light2 = new THREE.PointLight(0xffffff, 0.7, 0);
 light2.position.set(50, 0, 50);
 scene.add(light2);
 
-const light3 = new PointLight(0xffffff, 0.5, 0);
+const light3 = new THREE.PointLight(0xffffff, 0.5, 0);
 light3.position.set(-100, 0, -100);
 scene.add(light3);
 
-const light4 = new PointLight(0xffffff, 0.3, 0);
+const light4 = new THREE.PointLight(0xffffff, 0.3, 0);
 light4.position.set(-100, -200, -100);
 scene.add(light4);
 
 const color = 0x1c1c1c;
 const near = 1;
 const far = 100;
-scene.fog = new Fog(color, near, far);
+scene.fog = new THREE.Fog(color, near, far);
 
-const renderer = new WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -77,7 +59,7 @@ const helixRadius = 1.35;
 const numSegmentsPerStep = 40;
 
 // the helix starts out as one long rectangle, like an uncoiled ribbon
-const geometry = new BoxGeometry(
+const geometry = new THREE.BoxGeometry(
   numSteps * Math.PI * 2, // width
   helixEdgeWidth, // height of the "uncoiled ribbon," but "width" of the coiled helix's edge
   0.04, // depth
@@ -111,22 +93,22 @@ for (let i = 0; i < position.count; i++) {
   }
 }
 
-const material = new MeshPhongMaterial({
+const material = new THREE.MeshPhongMaterial({
   color: 0x3a3a3a,
   emissive: 0xd4af37,
   shininess: 100,
-  side: DoubleSide,
+  side: THREE.DoubleSide,
   flatShading: false,
 });
 
-const helix1 = new Mesh(geometry, material);
+const helix1 = new THREE.Mesh(geometry, material);
 scene.add(helix1);
 
 /*
  * second helix
  */
 const geometry2 = geometry.clone();
-const helix2 = new Mesh(geometry2, material);
+const helix2 = new THREE.Mesh(geometry2, material);
 
 // rotate the second geometry around the y-axis
 helix2.rotation.y = Math.PI * 0.78;
@@ -140,7 +122,7 @@ const baseColorMaterial = (color: "red" | "green" | "blue" | "yellow") => {
     green: 0xb1e597,
     yellow: 0xfaedb9,
   };
-  return new MeshPhongMaterial({
+  return new THREE.MeshPhongMaterial({
     color: colorLookup[color],
     shininess: 30,
     flatShading: false,
@@ -148,7 +130,7 @@ const baseColorMaterial = (color: "red" | "green" | "blue" | "yellow") => {
 };
 
 const tubeGeometry = (path: any) =>
-  new TubeGeometry(
+  new THREE.TubeGeometry(
     path,
     1, // pathSegments,
     0.065, // tubeRadius,
@@ -169,13 +151,13 @@ const basePair = (basePairY: number) => {
     x1 * Math.sin(-helix2.rotation.y) + z1 * Math.cos(-helix2.rotation.y);
 
   // split it in half, so it's a pair
-  const baseCoords1: Vector3[] = [
-    new Vector3(x1, y1, z1),
-    new Vector3((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2),
+  const baseCoords1: THREE.Vector3[] = [
+    new THREE.Vector3(x1, y1, z1),
+    new THREE.Vector3((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2),
   ];
-  const baseCoords2: Vector3[] = [
-    new Vector3((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2),
-    new Vector3(x2, y2, z2),
+  const baseCoords2: THREE.Vector3[] = [
+    new THREE.Vector3((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2),
+    new THREE.Vector3(x2, y2, z2),
   ];
 
   const isRedGreen = Math.random() >= 0.5;
@@ -184,11 +166,11 @@ const basePair = (basePairY: number) => {
   const meshMaterial1 = baseColorMaterial(isRedGreen ? "red" : "blue");
   const meshMaterial2 = baseColorMaterial(isRedGreen ? "green" : "yellow");
 
-  const baseMesh1 = new Mesh(
+  const baseMesh1 = new THREE.Mesh(
     tubeGeometry(new Path3(baseCoords1)),
     isColorFlipped ? meshMaterial1 : meshMaterial2,
   );
-  const baseMesh2 = new Mesh(
+  const baseMesh2 = new THREE.Mesh(
     tubeGeometry(new Path3(baseCoords2)),
     isColorFlipped ? meshMaterial2 : meshMaterial1,
   );
@@ -206,9 +188,9 @@ for (let i = 1; i < numBasePairs; i++) {
 /*
  * controls and render
  */
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.3;
+// const controls = new OrbitControls(camera, renderer.domElement);
+// controls.enableDamping = true;
+// controls.dampingFactor = 0.3;
 
 function render() {
   requestAnimationFrame(render);
@@ -216,6 +198,6 @@ function render() {
   scene.rotation.y += 0.0012;
 
   renderer.render(scene, camera);
-  controls.update();
+  // controls.update();
 }
 render();

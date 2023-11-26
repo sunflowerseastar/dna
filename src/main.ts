@@ -1,5 +1,4 @@
-// import * as THREE from "three";
-// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { OrbitControls } from "./OrbitControls.js";
 
 import { Path3 } from "./Path3";
 
@@ -188,9 +187,9 @@ for (let i = 1; i < numBasePairs; i++) {
 /*
  * controls and render
  */
-// const controls = new OrbitControls(camera, renderer.domElement);
-// controls.enableDamping = true;
-// controls.dampingFactor = 0.3;
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.3;
 
 function render() {
   requestAnimationFrame(render);

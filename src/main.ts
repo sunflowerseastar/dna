@@ -191,6 +191,11 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.3;
 
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has("noZoom") && urlParams.get("noZoom") !== "false") {
+  controls.enableZoom = false;
+}
+
 function render() {
   requestAnimationFrame(render);
 
